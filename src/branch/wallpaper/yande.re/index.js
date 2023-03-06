@@ -1,3 +1,5 @@
+import dayjs from 'dayjs';
+
 function format(size) {
   const kb = 1024;
   const mb = kb * 1024;
@@ -13,73 +15,113 @@ const ratingMap = {
   's': 'Safe',
 };
 
+const langMap = {
+  'author': ['Author', '作者'],
+  'size': ['Size', '尺寸'],
+  'file_size': ['File Size', '文件大小'],
+  'source': ['Source', '来源'],
+  'score': ['Score', '评分'],
+  'rating': ['Rating', '等级'],
+  'created_at': ['Created At', '创建时间'],
+  'updated_at': ['Updated At', '更新时间'],
+};
+
+const langs = ['en', 'zh'];
+
 export function list(args) {
-  const { page, limit, params } = args || {};
-  const currPage = page || 1;
-  const pageSize = limit || 20;
-  const query = {
-    limit: pageSize,
-    page: currPage,
-    tags: params || 'rating:safe'
-  };
-  const { data } = httpCall({ url: 'https://yande.re/post.json', query });
+  const { url, overrides, lang } = args;
+  let rawUrl = url;
+  if (overrides) {
+    const newUrl = new URL(url);
+    if (overrides.hasOwnProperty('page')) {
+      newUrl.searchParams.set('page', overrides.page);
+    }
+    if (overrides.hasOwnProperty('limit')) {
+      newUrl.searchParams.set('limit', overrides.limit);
+    }
+    if (overrides.hasOwnProperty('query')) {
+      for (const key in overrides.query) {
+        newUrl.searchParams.set(key, overrides.query[key]);
+      }
+    }
+    if (overrides.hasOwnProperty('appendQuery')) {
+      for (const key in overrides.query) {
+        newUrl.searchParams.set(key, overrides.query[key]);
+      }
+    }
+    rawUrl = newUrl.toString();
+  }
+  const { data } = httpCall(rawUrl);
   const list = [];
-  if (data) {
+  if (data && data.length) {
+    let langIndex = langs.indexOf(lang);
+    if (langIndex < 0) {
+      langIndex = 0;
+    }
+    const tagUrl = new URL(url);
+    tagUrl.searchParams.set('page', '1');
     for (const datum of data) {
-      const tags = datum.tags.split(' ').map(tag => ({ tag }));
+      const tags = datum.tags.split(' ').map(tag => {
+        const url = tagUrl.toString();
+        tagUrl.searchParams.set('tags', tag);
+        return { tag, url };
+      });
+      const info = [
+        {
+          label: langMap['author'][langIndex],
+          text: datum.author,
+          style: 'inline'
+        },
+        {
+          label: langMap['size'][langIndex],
+          text: `${datum.width}×${datum.height}`,
+          style: 'inline'
+        },
+        {
+          label: langMap['file_size'][langIndex],
+          text: `${format(datum.file_size)}`,
+          style: 'inline'
+        },
+        {
+          label: langMap['source'][langIndex],
+          text: datum.source || null,
+          url: datum.source || null,
+        },
+        {
+          label: langMap['score'][langIndex],
+          text: `${datum.score}`,
+          style: 'inline'
+        },
+        {
+          label: langMap['rating'][langIndex],
+          text: `${ratingMap[datum.rating] || 'Unknown'}`,
+          style: 'inline'
+        },
+        {
+          label: langMap['created_at'][langIndex],
+          text: dayjs(datum.created_at * 1000).format('YYYY-MM-DD HH:mm:ss'),
+          style: 'inline'
+        },
+        {
+          label: langMap['updated_at'][langIndex],
+          text: datum.updated_at ? dayjs(datum.updated_at * 1000).format('YYYY-MM-DD HH:mm:ss') : null,
+          style: 'inline'
+        }
+      ].filter((e) => !!e.text);
       list.push({
         preview: datum.sample_url || datum.jpeg_url,
         url: datum.file_url || datum.jpeg_url || datum.sample_url,
-        display: [
-          {
-            label: 'Author',
-            text: datum.author,
-            style: 'inline'
-          },
-          {
-            label: 'Size',
-            text: `${datum.width}×${datum.height}`,
-            style: 'inline'
-          },
-          {
-            label: 'File Size',
-            text: `${format(datum.file_size)}`,
-            style: 'inline'
-          },
-          {
-            label: 'Source',
-            text: datum.source || null,
-            url: datum.source || null,
-          },
-          {
-            label: 'Score',
-            text: `${datum.score}`,
-            style: 'inline'
-          },
-          {
-            label: 'Rating',
-            text: `${ratingMap[datum.rating] || 'Unknown'}`,
-            style: 'inline'
-          },
-          {
-            label: 'Created At',
-            text: datum.created_at,
-            style: 'inline'
-          },
-          {
-            label: 'Updated At',
-            text: datum.updated_at,
-            style: 'inline'
-          }
-        ],
+        info,
         id: datum.id,
-        tags: tags
+        tags
       });
     }
   }
+  const nextUrl = new URL(rawUrl);
+  const page = parseInt(nextUrl.searchParams.get('page'));
+  nextUrl.searchParams.set('page', (page + 1).toString());
   return {
-    page: currPage,
-    limit: pageSize,
     list,
+    next: nextUrl.toString(),
   };
 }

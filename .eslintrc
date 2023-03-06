@@ -31,6 +31,7 @@
       "error",
       "always"
     ],
-    "no-undef": "off"
+    "no-undef": "off",
+    "no-prototype-builtins": "off"
   }
 }

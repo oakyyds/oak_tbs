@@ -23,8 +23,10 @@ export default async function build() {
         license
       } = JSON.parse(String(fs.readFileSync(path.join(process.cwd(), 'node_modules', file.substring(0, file.length - '.js'.length), 'package.json'))));
       trunk.push({ name, version, description, license, dist: path.join('trunk', file) });
-    } finally {
       spinner.succeed();
+    } catch (e) {
+      spinner.fail(e.toString());
+      throw e;
     }
   }
   fs.writeFileSync(path.join(outputDir, 'index.json'), JSON.stringify(trunk));

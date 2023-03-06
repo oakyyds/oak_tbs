@@ -6,6 +6,7 @@ import commonjs from '@rollup/plugin-commonjs';
 import { defineRollupSwcMinifyOption, defineRollupSwcOption, minify, swc } from 'rollup-plugin-swc3';
 import json from '@rollup/plugin-json';
 import cleanup from 'rollup-plugin-cleanup';
+import { walk } from 'estree-walker';
 
 export async function buildFile(options) {
   const { metadata, inputFile, outputFile, external } = options;
@@ -46,6 +47,17 @@ export async function buildFile(options) {
         name: 'inject-metadata',
         transform(code, module) {
           if (metadata && module === inputFile) {
+            const ast = this.parse(code);
+            const supports = [];
+            walk(ast, {
+              enter(node) {
+                if (node.type === 'ExportNamedDeclaration') {
+                  supports.push(node.declaration.id.name);
+                }
+              }
+            });
+            supports.push('metadata');
+            metadata.supports = supports;
             return `${code}\n\nexport function metadata(){return ${JSON.stringify(metadata)};}`;
           }
         }

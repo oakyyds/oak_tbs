@@ -3,13 +3,18 @@
   "description": "Danbooru is a web application that allows you to upload, share, and tag images. Much of it is inspired by both Moeboard and Flickr. It was specifically designed to be of maximum utility to seasoned imageboard hunters. Some of these features include:",
   "icon": "favicon.ico",
   "entry": "index.js",
-  "version": "v1.0.0",
-  "versionCode": 1,
-  "language": "en",
+  "version": "1.0.0",
+  "language": [
+    {
+      "label": "English",
+      "lang": "en"
+    },
+    {
+      "label": "中文",
+      "lang": "zh"
+    }
+  ],
   "homepage": "https://yande.re",
-  "mirrors": [""],
-  "restriction": "R18+",
-  "supports": [
-    ""
-  ]
+  "mirrors": [],
+  "restriction": "R18+"
 }

@@ -4,6 +4,31 @@ import { buildFile } from './rollup.js';
 import ora from 'ora';
 
 
+function checkMetadata(metadata) {
+  const { name, description, homepage, entry, version, language } = metadata;
+  if (!name) {
+    throw Error('Branch name cannot be empty');
+  }
+  if (!description) {
+    throw Error('Branch description cannot be empty');
+  }
+  if (!homepage) {
+    throw Error('Branch homepage cannot be empty');
+  }
+  if (!entry) {
+    throw Error('Branch homepage cannot be empty');
+  }
+  if (!version) {
+    throw Error('Branch version cannot be empty');
+  }
+  if (!RegExp('^\\d+\\.\\d+\\.\\d+$').test(version)) {
+    throw Error('Branch version format is number.number.number, eg: 1.0.10');
+  }
+  if (language && !Array.isArray(language)) {
+    throw Error('Branch language must be an array, eg: ["en"]');
+  }
+}
+
 export default async function build() {
   const inputDir = path.join(process.cwd(), 'src', 'branch');
   const outputDir = path.join(process.cwd(), 'dist', 'branch');
@@ -31,18 +56,21 @@ export default async function build() {
       const spinner = ora(`build branch/${type}/${item}.js`).start();
       try {
         const buffer = fs.readFileSync(path.join(space, 'index.json'));
-        const metadata = JSON.parse(String(buffer));
         const output = path.join(outputDir, type);
         if (!fs.existsSync(output)) {
           fs.mkdirSync(output, { recursive: true });
         }
+        const metadata = JSON.parse(String(buffer));
+        checkMetadata(metadata);
         if (metadata.icon) {
-          const icon = path.join(space, metadata.icon);
-          if (fs.existsSync(icon)) {
-            fs.copyFileSync(icon, path.join(output, item + '.ico'));
-            metadata.icon = path.join('branch', type, item + '.ico');
-          } else {
-            throw `icon not found: ${icon}`;
+          if (!RegExp('^https?://').test(metadata.icon)) {
+            const icon = path.join(space, metadata.icon);
+            if (fs.existsSync(icon)) {
+              fs.copyFileSync(icon, path.join(output, item + '.ico'));
+              metadata.icon = path.join('branch', type, item + '.ico');
+            } else {
+              throw `icon not found: ${icon}`;
+            }
           }
         }
         metadata.dist = path.join('branch', type, item + '.js');
@@ -54,8 +82,10 @@ export default async function build() {
         });
         delete metadata.entry;
         branch.push(metadata);
-      } finally {
         spinner.succeed();
+      } catch (e) {
+        spinner.fail(e.toString());
+        throw e;
       }
     }
     obj[type] = branch;
