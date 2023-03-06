@@ -1,0 +1,9 @@
+{
+  "sourceMaps": false,
+  "jsc": {
+    "parser": {
+      "syntax": "typescript"
+    },
+    "target": "es2020"
+  }
+}

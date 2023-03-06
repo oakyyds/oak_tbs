@@ -1,0 +1,36 @@
+{
+  "root": true,
+  "env": {
+    "node": true
+  },
+  "parser": "@typescript-eslint/parser",
+  "plugins": [
+    "@typescript-eslint"
+  ],
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/eslint-recommended",
+    "plugin:@typescript-eslint/recommended"
+  ],
+  "rules": {
+    "quotes": [
+      "error",
+      "single"
+    ],
+    "semi": [
+      "error",
+      "always"
+    ],
+    "prefer-const": [
+      2,
+      {
+        "ignoreReadBeforeAssign": false
+      }
+    ],
+    "object-curly-spacing": [
+      "error",
+      "always"
+    ],
+    "no-undef": "off"
+  }
+}

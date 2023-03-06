@@ -1,0 +1,40 @@
+name: Preview PR
+
+on:
+  pull_request:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+      - uses: pnpm/action-setup@v2
+        id: pnpm-install
+        with:
+          version: 7
+      - name: Build
+        run: |
+          pnpm install
+          pnpm run build
+      - name: Deploy
+        uses: amondnet/vercel-action@v25
+        id: from-pr
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID}}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID}}
+          github-comment: false
+          working-directory: dist
+      - name: Comment PR
+        uses: thollander/actions-comment-pull-request@v2
+        with:
+          message: |
+            ✅ Preview
+            ${{ steps.from-pr.outputs.preview-url }}
+            Built with commit ${{github.sha}}.
