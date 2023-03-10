@@ -64,7 +64,7 @@ export function list(args) {
       const tags = datum.tags.split(' ').map(tag => {
         const url = tagUrl.toString();
         tagUrl.searchParams.set('tags', tag);
-        return { tag, url };
+        return { tag, url, action: 'search' };
       });
       const info = [
         {
@@ -112,7 +112,7 @@ export function list(args) {
         preview: datum.sample_url || datum.jpeg_url,
         url: datum.file_url || datum.jpeg_url || datum.sample_url,
         info,
-        id: datum.id,
+        id: datum.id.toString(),
         tags
       });
     }

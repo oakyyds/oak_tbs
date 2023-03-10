@@ -5,7 +5,7 @@ import ora from 'ora';
 
 
 function checkMetadata(metadata) {
-  const { name, description, homepage, entry, version, language } = metadata;
+  const { name, description, homepage, entry, version, language, mirrors } = metadata;
   if (!name) {
     throw Error('Branch name cannot be empty');
   }
@@ -26,6 +26,9 @@ function checkMetadata(metadata) {
   }
   if (language && !Array.isArray(language)) {
     throw Error('Branch language must be an array, eg: ["en"]');
+  }
+  if (mirrors && mirrors.length === 0) {
+    delete metadata.mirrors;
   }
 }
 
@@ -74,6 +77,8 @@ export default async function build() {
           }
         }
         metadata.dist = path.join('branch', type, item + '.js');
+        metadata.type = type;
+        metadata.ns = item;
         await buildFile({
           metadata,
           inputFile: path.join(space, metadata.entry),

@@ -48,16 +48,25 @@ export async function buildFile(options) {
         transform(code, module) {
           if (metadata && module === inputFile) {
             const ast = this.parse(code);
-            const supports = [];
+            const methods = [];
+            const dependencies = [];
             walk(ast, {
               enter(node) {
                 if (node.type === 'ExportNamedDeclaration') {
-                  supports.push(node.declaration.id.name);
+                  methods.push(node.declaration.id.name);
+                } else if (node.type === 'ImportDeclaration' && external) {
+                  const imp = node.source.value;
+                  if (external.indexOf(imp) >= 0) {
+                    dependencies.push(imp);
+                  }
                 }
               }
             });
-            supports.push('metadata');
-            metadata.supports = supports;
+            methods.push('metadata');
+            metadata.methods = methods;
+            if (dependencies.length) {
+              metadata.dependencies = dependencies;
+            }
             return `${code}\n\nexport function metadata(){return ${JSON.stringify(metadata)};}`;
           }
         }
