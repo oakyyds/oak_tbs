@@ -161,9 +161,12 @@ function onResize() {
   if (resizeTimer) {
     clearTimeout(resizeTimer);
   }
-  const willResize = () => {
+  const willResize = (check) => {
     resizeChildren('.apps', '.app', 200, 320);
     resizeChildren('.deps', '.dep', 240, 320);
+    if (!check) {
+      resizeTimer = setTimeout(() => willResize(true), 500);
+    }
   };
   resizeTimer = setTimeout(willResize, 50);
 }
